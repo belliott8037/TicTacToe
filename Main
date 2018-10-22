@@ -1,0 +1,42 @@
+/*
+    Make a game of Tic-Tac-Toe asking for heads/tails for a coin flip to see who goes first.
+    based on who goes first the computer will randomly choose a spot
+    After a turn is made the system will print out what the board looks like
+    Game is finished once the board is filled with no winner, or someone gets 3 in a row.
+ */
+
+
+import java.util.Scanner;
+
+public class TicTacMain {
+    public static void main(String args[]) {
+        boolean playerOrder; // if true, player one (hmn) goes first.
+        String [][] gameBoard;
+        String playAgain = "y";
+        Scanner input = new Scanner(System.in);
+        TicTacFunctions game = new TicTacFunctions();
+        
+        // Loops game until user doesn't input y.
+        while(playAgain.equals("y")|| playAgain.equals("Y")){
+            playerOrder = game.startup();
+            gameBoard = game.initializeBoard();
+            game.gamePlay(gameBoard, playerOrder);
+
+            System.out.println("Would you like to play again? y/n");
+            while((!input.hasNext("Y")) || !(input.hasNext("y")) || !(input.hasNext("n")) || !(input.hasNext("N")))
+            {
+                if(input.hasNext("Y") || (input.hasNext("y")) || (input.hasNext("n")) || (input.hasNext("N")))
+                    break;
+                System.out.println("Enter y/n please");
+                input.nextLine();
+            }
+            playAgain = input.nextLine();
+            if(playAgain.equals("y")|| playAgain.equals("Y"))
+            {
+                System.out.println("Replaying...");
+            }
+            else
+                System.out.println("Thanks for playing! exiting..");
+        }
+    }
+}
