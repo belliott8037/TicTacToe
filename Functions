@@ -1,0 +1,302 @@
+import java.util.Scanner;
+import java.util.Random;
+
+class TicTacFunctions {
+
+    // startup asks player if they want to play the game, then they choose a side of coin to see who goes first.
+    // this function returns true or false to see which order the turns are going to go
+    Boolean startup()
+    {
+        boolean order = false; // when order equals true that means player goes first
+        System.out.println("Hey! Wanna play some tic-tac-toe? y/n");
+        Scanner sc = new Scanner(System.in);
+        Random rand = new Random();
+        String coinSide; // coinSide is made for ease of print statements.
+
+        // checks to see if a valid input and capitalized letters
+        while((!sc.hasNext("Y")) || !(sc.hasNext("y")) || !(sc.hasNext("n")) || !(sc.hasNext("N")))
+        {
+            if(sc.hasNext("Y") || (sc.hasNext("y")) || (sc.hasNext("n")) || (sc.hasNext("N")))
+                break;
+            System.out.println("Enter y/n please");
+            sc.nextLine();
+        }
+        String input = sc.nextLine(); // sets input
+        // This block initiates the coin flip aspect of the start of the game if the player chooses yes to play.
+        if(input.equals("y") || (input.equals("Y")))
+        {
+            System.out.println("Of course you do! Let's get started");
+            System.out.println("Heads or Tails?");
+            while((!sc.hasNext("Heads")) || !(sc.hasNext("Tails")) || !(sc.hasNext("heads")) || !(sc.hasNext("tails")))
+            {
+                if(sc.hasNext("Heads") || (sc.hasNext("Tails")) || (sc.hasNext("heads")) || (sc.hasNext("tails")))
+                    break;
+                System.out.println("Enter Heads or Tails");
+                sc.nextLine();
+            }
+            input = sc.nextLine();
+            System.out.println("You've chosen "+input+" Flipping coin...");
+            int coin = rand.nextInt(101);
+            // coin is Heads when greater than 50, Tails when less
+            if(coin > 50)
+                coinSide = "Heads";
+            else
+                coinSide = "Tails";
+
+            if((coin > 50 && (input.equals("Heads") || input.equals("heads"))) || (coin < 50 && (input.equals("Tails") || (input.equals("tails")))))
+            {
+                System.out.println(coinSide+"! You go first! ");
+                order = true; // changes the order from false to true to make player go first if they won toss.
+            }
+            else
+                System.out.println("You go second! The side was " + coinSide);
+        }
+        else {
+            System.out.println("Okay, it's not everyone's game I guess..");
+            sc.close();
+            System.exit(0);
+        }
+        return order;
+    }
+
+    // this function creates a 3x3 matrix, displays it, and returns it to the main function
+    String [][] initializeBoard()
+    {
+        String [][] gameBoard = new String [3][3];
+        for(int i = 0; i < 3; i++){
+            for (int j = 0; j < 3; j++) {
+                gameBoard[i][j] = "[ ]";
+                System.out.print(gameBoard[i][j]);
+            }
+            System.out.println();
+        }
+        return gameBoard;
+    }
+
+    // gamePlay has both instances of possible player orders (depending on who won the coin toss)
+    void gamePlay(String [][] gameBoard, boolean playerOrder)
+    {
+        Random rand = new Random();
+        String winVal = null;
+        // starts the turns in the correct order, if player 1 won the coin toss then they go first and the value
+        // of the turn will be true. otherwise cpu will go next.
+        int turnCount = 0; // turnCount keeps track of the turns, increments after each input from player and bot
+        int row, column,compRow,compCol;
+
+        // this loop continues while winVal remains empty and the turns are less than 9.
+        // winVal gets a value when checkWin returns the value of the character to it in the checkWin function
+        while(true){
+            if(playerOrder){
+                System.out.println("Please enter a row number from 1-3");
+                row = getPositions();
+                System.out.println("Please enter a column number from 1-3");
+                column = getPositions();
+                System.out.println("attempting to place x at position " + row + "," + column);
+                gameBoard = populatePosition(gameBoard, row, column, true, true);
+                turnCount++;
+                if(turnCount >= 3) {
+                    winVal = checkWin(gameBoard); // checkWin checks after 3 turns if win condition is met
+                    if (!winVal.equals(""))
+                        break;
+                }
+                if(turnCount >= 9)
+                    break;
+                System.out.println("Computer's move.....");
+                compRow = rand.nextInt(3);
+                compCol = rand.nextInt(3);
+                gameBoard = populatePosition(gameBoard, compRow, compCol, false, true);
+                turnCount++;
+                if (turnCount >= 3) {
+                    winVal = checkWin(gameBoard); // checkWin checks after 3 turns if win condition is met
+                    if (!winVal.equals(""))
+                        break;
+                }
+            }
+            // -----------THIS IS THE OPPOSITE POSSIBLE STATE---------------
+            if(!playerOrder){
+                System.out.println("Computer's move.....");
+                compRow = rand.nextInt(3);
+                compCol = rand.nextInt(3);
+                gameBoard = populatePosition(gameBoard, compRow, compCol, false, false);
+                turnCount++;
+                if (turnCount >= 3) {
+                    winVal = checkWin(gameBoard); // checkWin checks after 3 turns if win condition is met
+                    if (!winVal.equals(""))
+                        break;
+                }
+                if(turnCount >= 9)
+                    break;
+                System.out.println("Please enter a row number from 1-3");
+                row = getPositions();
+                System.out.println("Please enter a column number from 1-3");
+                column = getPositions();
+                System.out.println("attempting to place o at position " + row + "," + column);
+                gameBoard = populatePosition(gameBoard, row, column, true, false);
+                turnCount++;
+                if(turnCount >= 3) {
+                    winVal = checkWin(gameBoard); // checkWin checks after 3 turns if win condition is met
+                    if (!winVal.equals(""))
+                        break;
+                }
+                if(turnCount >= 9)
+                    break;
+            }
+        }
+        endGame(winVal,playerOrder);
+    }
+
+    // populatePosition returns the board with a new updated spot, first it checks to see if the position is open then populates
+    // spot with an X or an O (which now that I look at it again it could just look at the space for the blank spot.)
+    private String[][] populatePosition(String[][] gameBoard, int row, int column, boolean turn, boolean playerOrder)
+    {
+        Random rand = new Random();
+        // if the human player won the coin toss they get to go first and they are the X's
+        if(turn && playerOrder){
+            // check if the position is filled first with minus one to compensate for 0 position
+            while(gameBoard[row-1][column-1].equals("[x]") || gameBoard[row-1][column-1].equals("[o]"))
+            {
+                System.out.println("This space is occupied please enter another position");
+                row = getPositions();
+                column = getPositions();
+            }
+            System.out.println("row is equal to value "+row+"column is equal to value "+column);
+            gameBoard[row-1][column-1] = "[x]";
+        }
+        if (turn && !playerOrder)
+        {
+            while(gameBoard[row-1][column-1].equals("[x]") || gameBoard[row-1][column-1].equals("[o]"))
+            {
+                System.out.println("This space is occupied please enter another position");
+                row = getPositions();
+                column = getPositions();
+            }
+            gameBoard[row-1][column-1] = "[o]";
+        }
+        // ----------------------COMPUTER TURN HERE -------------------------
+        if(!turn){
+            // check if the position is filled first, -1 not needed with computer rolls because 0 inclusive
+            while(gameBoard[row][column].equals("[x]") || gameBoard[row][column].equals("[o]"))
+            {
+                row = rand.nextInt(3);
+                column = rand.nextInt(3);
+            }
+            if(playerOrder)
+            {
+                gameBoard[row][column] = "[o]";
+            }
+            else
+                gameBoard[row][column] = "[x]";
+        }
+        // displays updated board
+        for(int i = 0; i < 3; i++){
+            for (int j = 0; j < 3; j++) {
+                System.out.print(gameBoard[i][j]);
+            }
+            System.out.println();
+        }
+        return gameBoard;
+    }
+    // getPositions filters out invalid responses for placements
+    private int getPositions()
+    {
+        int position = 0;
+        Scanner input = new Scanner(System.in);
+        while(input.hasNext())
+        {
+            if(input.hasNextInt()) {
+                int val = input.nextInt();
+                if (val >= 1 && val <= 3) {
+                    position = val;
+                    break;
+                }
+            }
+            else {
+                System.out.println("Please enter a value from 1-3");
+                input.next();
+            }
+        }
+        return position;
+    }
+    // checkWin goes through all win conditions
+    // returns value if a win condition is met, where it is then later found out who was in control of that value
+    private String checkWin(String[][] gameBoard) {
+        boolean win = false;
+        int columns = 0;
+        int rows = 0;
+        String winningValue = null;
+        // check rows
+        for (int i = 0; i < 3; i++)
+        {
+            if(gameBoard[i][columns].equals(gameBoard[i][columns+1]) && (gameBoard[i][columns+1].equals(gameBoard[i][columns+2])))
+            {
+                if(gameBoard[i][columns].equals("[x]") || gameBoard[i][columns].equals("[o]")){
+                    System.out.println("Winner on row " + (i+1));
+                    win = true;
+                    System.out.println("Winner! " + gameBoard[i][0]);// there's a win in a row
+                    winningValue = gameBoard[i][columns];
+                }
+            }
+        }
+
+        // check columns
+        for (int i = 0; i < 3; i++)
+        {
+            if(gameBoard[rows][i].equals(gameBoard[rows+1][i]) && (gameBoard[rows+1][i].equals(gameBoard[rows+2][i])))
+            {
+                if(gameBoard[rows][i].equals("[x]") || gameBoard[rows][i].equals("[o]")){
+                    System.out.println("Winner on column " + (i+1));
+                    win = true;
+                    System.out.println("Winner! " + gameBoard[0][i]);// there's a win in a column
+                    winningValue = gameBoard[rows][i];
+                }
+            }
+        }
+
+        // check diagonal 1
+
+        if(gameBoard[0][0].equals(gameBoard[1][1]) && (gameBoard[1][1].equals(gameBoard[2][2])))
+        {
+            if(gameBoard[0][0].equals("[x]") || gameBoard[0][0].equals("[o]")){
+                System.out.println("Winner on diagonal ");
+                win = true;
+                System.out.println("Winner! " + gameBoard[0][0]);// there's a win in diagonal 1
+                winningValue = gameBoard[0][0];
+            }
+        }
+        // check diagonal 2
+        if(gameBoard[2][0].equals(gameBoard[1][1]) && (gameBoard[1][1].equals(gameBoard[0][2])))
+        {
+            if(gameBoard[2][0].equals("[x]") || gameBoard[2][0].equals("[o]")){
+                System.out.println("Winner on diagonal ");
+                win = true;
+                System.out.println("Winner! " + gameBoard[2][0]);// there's a win in diagonal 2
+                winningValue = gameBoard[2][0];
+            }
+        }
+
+        if(win)
+        {
+            return winningValue;
+        }
+        else
+            return "";
+    }
+    // endGame takes the player's order and the winning value to determine who won the game.
+    // since if the player won the coin toss they have to be x and o if the player lost the coin toss
+    // we can use this to find out who won the game
+    private void endGame(String winningValue, boolean playerOrder)
+    {
+        if (playerOrder && winningValue.equals("[x]"))
+        {
+            System.out.println("Congratulations player 1 wins");
+        }
+        else if(!playerOrder && winningValue.equals("[o]"))
+        {
+            System.out.println("Congratulations player 1 wins");
+        }
+        else if (winningValue.isEmpty())
+            System.out.println("Draw.");
+        else
+            System.out.println("Player 2 wins");
+    }
+}
